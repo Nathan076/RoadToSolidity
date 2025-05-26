@@ -8,38 +8,60 @@ contract MyTokenTest is Test {
     MyToken token;
     address user1 = address(0x1);
     address user2 = address(0x2);
+    uint8 constant DECIMALS = 18;
+    uint256 constant TOTALSUPPLY = 1000000 * (10 ** DECIMALS);
 
     function setUp() public {
-        token = new MyToken(1000 ether);
-        vm.prank(address(this));
-        token.transfer(user1, 500 ether);
-    }
+        token = new MyToken(TOTALSUPPLY, "MyToken", "MTK", DECIMALS);
 
-    function testInitialBalance() public {
-        assertEq(token.balanceOf(user1), 500 ether);
-        assertEq(token.balanceOf(address(this)), 500 ether);
+         vm.prank(address(this));
+        token.transfer(user1, 500);
+    
     }
+    function testinitialSupply() public view{
+        assertEq(token.name(),"MyToken");
+        assertEq(token.symbol(),"MTK");
+        assertEq(token.totalSupply(),TOTALSUPPLY);
+        assertEq(token.decimals(),DECIMALS);
+    }
+    
+
 
     function testTransfer() public {
         vm.prank(user1);
-        token.transfer(user2, 200 ether);
-        assertEq(token.balanceOf(user2), 200 ether);
-        assertEq(token.balanceOf(user1), 300 ether);
+        token.transfer(user2, 200);
+        assertEq(token.balanceOf(user2), 200);
+        assertEq(token.balanceOf(user1), 300);
     }
 
     function testApproveAndTransferFrom() public {
         vm.prank(user1);
-        token.approve(address(this), 100 ether);
+        token.approve(address(this), 100);
 
         vm.prank(address(this));
-        token.transferFrom(user1, user2, 100 ether);
+        token.transferFrom(user1, user2, 100);
 
-        assertEq(token.balanceOf(user2), 100 ether);
-        assertEq(token.balanceOf(user1), 400 ether);
+        assertEq(token.balanceOf(user2), 100);
+        assertEq(token.balanceOf(user1), 400);
     }
     function testRequire () public {
+        uint256 amount = 2000000 * (10 ** DECIMALS);
+
         vm.prank(user1);
         vm.expectRevert(bytes("Not enough balance"));
-        token.transfer(user2, 400 ether);
+        token.transfer(user2, amount);
+    
     }
-}
+    function testMint() public {
+        uint256 amount = 5 * (10 ** DECIMALS);
+        address Miggz = address(0x22);
+        token.mint(Miggz, amount);
+        assertEq(token.balanceOf(Miggz), amount);
+        assertEq(token.totalSupply(), TOTALSUPPLY + amount);
+    }
+    function testBurn() public {
+        uint256 amount = 5 * (10 ** DECIMALS);
+        token.burn(amount);
+        assertEq(token.balanceOf(address(this), TOTALSUPPLY - amount));
+    }
+ }   
